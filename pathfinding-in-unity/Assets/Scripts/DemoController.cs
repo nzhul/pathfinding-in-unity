@@ -13,6 +13,8 @@ namespace Assets.Scripts
         public int goalX = 15;
         public int goalY = 1;
 
+        public float timeStep = 0.1f;
+
         private void Start()
         {
             if (mapData != null && graph != null)
@@ -33,6 +35,7 @@ namespace Assets.Scripts
                     Node goalNode = graph.nodes[goalX, goalY];
 
                     pathfinder.Init(graph, graphView, startNode, goalNode);
+                    StartCoroutine(pathfinder.SearchRoutine(timeStep));
                 }
             }
         }

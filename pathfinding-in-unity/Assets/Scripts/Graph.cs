@@ -53,7 +53,7 @@ namespace Assets.Scripts
             {
                 for (int x = 0; x < _width; x++)
                 {
-                    NodeType type = (NodeType)mapData[x, y];
+                    NodeType type = (NodeType)_mapData[x, y];
                     Node newNode = new Node(x, y, type);
                     nodes[x, y] = newNode;
 

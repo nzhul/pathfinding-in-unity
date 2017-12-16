@@ -59,5 +59,25 @@ namespace Assets.Scripts
                 }
             }
         }
+
+        public void ShowNodeArrow(Node node, Color color)
+        {
+            if (node != null)
+            {
+                NodeView nodeView = nodeViews[node.xIndex, node.yIndex];
+                if (nodeView != null)
+                {
+                    nodeView.ShowArrow(color);
+                }
+            }
+        }
+
+        public void ShowNodeArrows(List<Node> nodes, Color color)
+        {
+            foreach (Node n in nodes)
+            {
+                ShowNodeArrow(n, color);
+            }
+        }
     }
 }
