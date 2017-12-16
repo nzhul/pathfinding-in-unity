@@ -9,8 +9,26 @@ namespace Assets.Scripts
         public List<Node> walls = new List<Node>();
 
         int[,] _mapData;
+
         int _width;
+
+        public int Width
+        {
+            get
+            {
+                return _width;
+            }
+        }
+
         int _height;
+
+        public int Height
+        {
+            get
+            {
+                return _height;
+            }
+        }
 
         public static readonly Vector2[] allDirections =
         {
