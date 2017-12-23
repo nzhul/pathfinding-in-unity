@@ -32,6 +32,13 @@ namespace Assets.Scripts
         public bool isComplete = false;
         int _iterations = 0;
 
+        public enum Mode
+        {
+            BreathFirstSearch = 0,
+            Dijkstra = 1
+        }
+
+        public Mode mode = Mode.BreathFirstSearch;
 
         public void Init(Graph graph, GraphView graphView, Node start, Node goal)
         {
@@ -69,6 +76,7 @@ namespace Assets.Scripts
 
             isComplete = false;
             _iterations = 0;
+            _startNode.distanceTraveled = 0;
         }
 
         private void ShowColors(GraphView graphView, Node start, Node goal)
@@ -129,7 +137,14 @@ namespace Assets.Scripts
                         _exploredNodes.Add(currentNode);
                     }
 
-                    ExpandFrontier(currentNode);
+                    if (mode == Mode.BreathFirstSearch)
+                    {
+                        ExpandFrontierBreathFirst(currentNode);
+                    }
+                    else if (mode == Mode.Dijkstra)
+                    {
+                        ExpandFrontierDijkstra(currentNode);
+                    }
 
                     if (_frontierNodes.Contains(_goalNode))
                     {
@@ -137,6 +152,7 @@ namespace Assets.Scripts
                         if (exitOnGoal)
                         {
                             isComplete = true;
+                            Debug.Log("PATHFINDER mode: " + mode.ToString() + "   path length = " + _goalNode.distanceTraveled.ToString());
                         }
                     }
 
@@ -175,7 +191,7 @@ namespace Assets.Scripts
             }
         }
 
-        void ExpandFrontier(Node node)
+        void ExpandFrontierBreathFirst(Node node)
         {
             if (node != null)
             {
@@ -184,8 +200,39 @@ namespace Assets.Scripts
                     if (!_exploredNodes.Contains(node.neighbors[i])
                         && !_frontierNodes.Contains(node.neighbors[i]))
                     {
+                        float distanceToNeighbor = _graph.GetNodeDistance(node, node.neighbors[i]);
+                        float newDistanceTraveled = distanceToNeighbor + node.distanceTraveled;
+                        node.neighbors[i].distanceTraveled = newDistanceTraveled;
+
                         node.neighbors[i].previous = node;
                         _frontierNodes.Enqueue(node.neighbors[i]);
+                    }
+                }
+            }
+        }
+
+        void ExpandFrontierDijkstra(Node node)
+        {
+            if (node != null)
+            {
+                for (int i = 0; i < node.neighbors.Count; i++)
+                {
+                    if (!_exploredNodes.Contains(node.neighbors[i]))
+                    {
+                        float distanceToNeighbor = _graph.GetNodeDistance(node, node.neighbors[i]);
+                        float newDistanceTraveled = distanceToNeighbor + node.distanceTraveled;
+
+                        if (float.IsPositiveInfinity(node.neighbors[i].distanceTraveled) ||
+                            newDistanceTraveled < node.neighbors[i].distanceTraveled)
+                        {
+                            node.neighbors[i].previous = node;
+                            node.neighbors[i].distanceTraveled = newDistanceTraveled;
+                        }
+
+                        if (!_frontierNodes.Contains(node.neighbors[i]))
+                        {
+                            _frontierNodes.Enqueue(node.neighbors[i]);
+                        }
                     }
                 }
             }
