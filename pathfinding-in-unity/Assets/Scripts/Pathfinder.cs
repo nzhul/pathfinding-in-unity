@@ -1,4 +1,5 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
@@ -12,7 +13,7 @@ namespace Assets.Scripts
         Graph _graph;
         GraphView _graphView;
 
-        Queue<Node> _frontierNodes;
+        PriorityQueue<Node> _frontierNodes;
         List<Node> _exploredNodes;
         List<Node> _pathNodes;
 
@@ -35,7 +36,9 @@ namespace Assets.Scripts
         public enum Mode
         {
             BreathFirstSearch = 0,
-            Dijkstra = 1
+            Dijkstra = 1,
+            GreedyBestFirst = 2,
+            AStar = 3
         }
 
         public Mode mode = Mode.BreathFirstSearch;
@@ -61,7 +64,7 @@ namespace Assets.Scripts
 
             ShowColors(graphView, start, goal);
 
-            _frontierNodes = new Queue<Node>();
+            _frontierNodes = new PriorityQueue<Node>();
             _frontierNodes.Enqueue(start);
             _exploredNodes = new List<Node>();
             _pathNodes = new List<Node>();
@@ -79,7 +82,7 @@ namespace Assets.Scripts
             _startNode.distanceTraveled = 0;
         }
 
-        private void ShowColors(GraphView graphView, Node start, Node goal)
+        private void ShowColors(GraphView graphView, Node start, Node goal, bool lerpColor = false, float lerpValue = 0.5f)
         {
             if (graphView == null || start == null || goal == null)
             {
@@ -88,17 +91,17 @@ namespace Assets.Scripts
 
             if (_frontierNodes != null)
             {
-                graphView.ColorNodes(_frontierNodes.ToList(), frontierColor);
+                graphView.ColorNodes(_frontierNodes.ToList(), frontierColor, lerpColor, lerpValue);
             }
 
             if (_exploredNodes != null)
             {
-                graphView.ColorNodes(_exploredNodes, exploredColor);
+                graphView.ColorNodes(_exploredNodes, exploredColor, lerpColor, lerpValue);
             }
 
             if (_pathNodes != null && _pathNodes.Count > 0)
             {
-                graphView.ColorNodes(_pathNodes, pathColor);
+                graphView.ColorNodes(_pathNodes, pathColor, lerpColor, lerpValue * 2f);
             }
 
             NodeView startNodeView = graphView.nodeViews[start.xIndex, start.yIndex];
@@ -114,14 +117,14 @@ namespace Assets.Scripts
             }
         }
 
-        void ShowColors()
+        void ShowColors(bool lerpColor = false, float lerpValue = 0.5f)
         {
-            ShowColors(_graphView, _startNode, _goalNode);
+            ShowColors(_graphView, _startNode, _goalNode, lerpColor, lerpValue);
         }
 
         public IEnumerator SearchRoutine(float timeStep = 0.1f)
         {
-            float timeStart = Time.time;
+            float timeStart = Time.realtimeSinceStartup;
 
             yield return null;
 
@@ -145,6 +148,14 @@ namespace Assets.Scripts
                     {
                         ExpandFrontierDijkstra(currentNode);
                     }
+                    else if (mode == Mode.GreedyBestFirst)
+                    {
+                        ExpandFrontierGreedyBestFirst(currentNode);
+                    }
+                    else if (mode == Mode.AStar)
+                    {
+                        ExpandFrontierAStar(currentNode);
+                    }
 
                     if (_frontierNodes.Contains(_goalNode))
                     {
@@ -158,7 +169,7 @@ namespace Assets.Scripts
 
                     if (showIterations)
                     {
-                        ShowDiagnostics();
+                        ShowDiagnostics(true, 0.5f);
 
                         yield return new WaitForSeconds(timeStep);
                     }
@@ -169,15 +180,15 @@ namespace Assets.Scripts
                 }
             }
 
-            ShowDiagnostics();
-            Debug.Log("PATHFINDER Searchroutine: elapsed time = " + (Time.time - timeStart).ToString() + " seconds");
+            ShowDiagnostics(true, .5f);
+            Debug.Log("PATHFINDER Searchroutine: elapsed time = " + (Time.realtimeSinceStartup - timeStart).ToString() + " seconds");
         }
 
-        private void ShowDiagnostics()
+        private void ShowDiagnostics(bool lerpColor, float lerpValue = 0.5f)
         {
             if (showColors)
             {
-                ShowColors();
+                ShowColors(lerpColor, lerpValue);
             }
 
             if (_graphView != null && showArrows)
@@ -201,10 +212,38 @@ namespace Assets.Scripts
                         && !_frontierNodes.Contains(node.neighbors[i]))
                     {
                         float distanceToNeighbor = _graph.GetNodeDistance(node, node.neighbors[i]);
-                        float newDistanceTraveled = distanceToNeighbor + node.distanceTraveled;
+                        float newDistanceTraveled = distanceToNeighbor + node.distanceTraveled
+                            + (int)node.nodeType; // adding the terrain cost penalty
                         node.neighbors[i].distanceTraveled = newDistanceTraveled;
 
                         node.neighbors[i].previous = node;
+                        node.neighbors[i].priority = _exploredNodes.Count; // cheating
+                        _frontierNodes.Enqueue(node.neighbors[i]);
+                    }
+                }
+            }
+        }
+
+        void ExpandFrontierGreedyBestFirst(Node node)
+        {
+            if (node != null)
+            {
+                for (int i = 0; i < node.neighbors.Count; i++)
+                {
+                    if (!_exploredNodes.Contains(node.neighbors[i])
+                        && !_frontierNodes.Contains(node.neighbors[i]))
+                    {
+                        float distanceToNeighbor = _graph.GetNodeDistance(node, node.neighbors[i]);
+                        float newDistanceTraveled = distanceToNeighbor + node.distanceTraveled
+                            + (int)node.nodeType; // adding the terrain cost penalty
+                        node.neighbors[i].distanceTraveled = newDistanceTraveled;
+
+                        node.neighbors[i].previous = node;
+                        if (_graph != null)
+                        {
+                            // This line is the difference between BFS and Greedy BFS
+                            node.neighbors[i].priority = _graph.GetNodeDistance(node.neighbors[i], _goalNode);
+                        }
                         _frontierNodes.Enqueue(node.neighbors[i]);
                     }
                 }
@@ -220,7 +259,8 @@ namespace Assets.Scripts
                     if (!_exploredNodes.Contains(node.neighbors[i]))
                     {
                         float distanceToNeighbor = _graph.GetNodeDistance(node, node.neighbors[i]);
-                        float newDistanceTraveled = distanceToNeighbor + node.distanceTraveled;
+                        float newDistanceTraveled = distanceToNeighbor + node.distanceTraveled
+                            + (int)node.nodeType; // adding the terrain cost penalty
 
                         if (float.IsPositiveInfinity(node.neighbors[i].distanceTraveled) ||
                             newDistanceTraveled < node.neighbors[i].distanceTraveled)
@@ -231,6 +271,42 @@ namespace Assets.Scripts
 
                         if (!_frontierNodes.Contains(node.neighbors[i]))
                         {
+                            node.neighbors[i].priority = node.neighbors[i].distanceTraveled;
+                            _frontierNodes.Enqueue(node.neighbors[i]);
+                        }
+                    }
+                }
+            }
+        }
+
+        void ExpandFrontierAStar(Node node)
+        {
+            if (node != null)
+            {
+                for (int i = 0; i < node.neighbors.Count; i++)
+                {
+                    if (!_exploredNodes.Contains(node.neighbors[i]))
+                    {
+                        float distanceToNeighbor = _graph.GetNodeDistance(node, node.neighbors[i]);
+                        float newDistanceTraveled = distanceToNeighbor + node.distanceTraveled
+                            + (int)node.nodeType; // adding the terrain cost penalty; This can be replaced with more sofisticated formula!
+
+                        if (float.IsPositiveInfinity(node.neighbors[i].distanceTraveled) ||
+                            newDistanceTraveled < node.neighbors[i].distanceTraveled)
+                        {
+                            node.neighbors[i].previous = node;
+                            node.neighbors[i].distanceTraveled = newDistanceTraveled;
+                        }
+
+                        if (!_frontierNodes.Contains(node.neighbors[i]) && _graph != null)
+                        {
+                            // FScore = GScore + HScore
+                            // FScore = node.neighbors[i].priority
+                            // GScore = (int)node.neighbors[i].distanceTraveled
+                            // HScore = (int)_graph.GetNodeDistance(node.neighbors[i], _goalNode);
+
+                            float distanceToGoal = _graph.GetNodeDistance(node.neighbors[i], _goalNode); // HScore
+                            node.neighbors[i].priority = node.neighbors[i].distanceTraveled + distanceToGoal;
                             _frontierNodes.Enqueue(node.neighbors[i]);
                         }
                     }

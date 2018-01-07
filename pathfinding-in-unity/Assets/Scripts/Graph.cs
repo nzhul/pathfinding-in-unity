@@ -122,5 +122,16 @@ namespace Assets.Scripts
             return (1.4f * diagonalSteps + straightSteps);
         }
 
+        // Manhatan distance ignores the diagonal path and has better performance compared to GetNodeDistance
+        // "Manhatan" comes from the comparison with zig-zag taxi driver that drives through Manhatan city.
+        // Use this instread of GetNodeDistance for slight performance boost.
+        public int GetManhattanDistance(Node source, Node target)
+        {
+            int dx = Mathf.Abs(source.xIndex - target.xIndex);
+            int dy = Mathf.Abs(source.yIndex - target.yIndex);
+
+            return (dx + dy);
+        }
+
     }
 }

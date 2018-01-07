@@ -15,8 +15,17 @@ namespace Assets.Scripts
         public Texture2D textureMap;
         public string resourcePath = "Mapdata";
 
+        public Color32 openColor = Color.white;
+        public Color32 blockedColor = Color.black;
+        public Color32 lightTerrainColor = new Color32(124, 194, 78, 255);
+        public Color32 mediumTerrainColor = new Color32(252, 255, 52, 255);
+        public Color32 heavyTerrainColor = new Color32(255, 129, 12, 255);
+
+        static Dictionary<Color32, NodeType> terrainLookupTable = new Dictionary<Color32, NodeType>();
+
         private void Awake()
         {
+            SetupLookupTable();
             string levelName = SceneManager.GetActiveScene().name;
             if (textureMap == null)
             {
@@ -59,17 +68,17 @@ namespace Assets.Scripts
 
                     for (int x = 0; x < texture.width; x++)
                     {
-                        if (texture.GetPixel(x, y) == Color.black)
+                        Color pixelColor = texture.GetPixel(x, y);
+
+                        if (terrainLookupTable.ContainsKey(pixelColor))
                         {
-                            newLine += '1';
-                        }
-                        else if (texture.GetPixel(x, y) == Color.white)
-                        {
-                            newLine += '0';
+                            NodeType nodeType = terrainLookupTable[pixelColor];
+                            int nodeTypeNum = (int)nodeType;
+                            newLine += nodeTypeNum;
                         }
                         else
                         {
-                            newLine += ' ';
+                            newLine += '0';
                         }
                     }
 
@@ -122,6 +131,26 @@ namespace Assets.Scripts
             }
 
             return map;
+        }
+
+        void SetupLookupTable()
+        {
+            terrainLookupTable.Add(openColor, NodeType.Open);
+            terrainLookupTable.Add(blockedColor, NodeType.Blocked);
+            terrainLookupTable.Add(lightTerrainColor, NodeType.LightTerrain);
+            terrainLookupTable.Add(mediumTerrainColor, NodeType.MediumTerrain);
+            terrainLookupTable.Add(heavyTerrainColor, NodeType.HeavyTerrain);
+        }
+
+        public static Color GetColorFromNodeType(NodeType nodeType)
+        {
+            if (terrainLookupTable.ContainsValue(nodeType))
+            {
+                Color colorKey = terrainLookupTable.FirstOrDefault(x => x.Value == nodeType).Key;
+                return colorKey;
+            }
+
+            return Color.white;
         }
     }
 }

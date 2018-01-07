@@ -165,7 +165,7 @@ Camera:
   far clip plane: 1000
   field of view: 60
   orthographic: 1
-  orthographic size: 19
+  orthographic size: 10
   m_Depth: -1
   m_CullingMask:
     serializedVersion: 2
@@ -188,7 +188,7 @@ Transform:
   m_PrefabInternal: {fileID: 0}
   m_GameObject: {fileID: 355966569}
   m_LocalRotation: {x: 0.7071068, y: 0, z: 0, w: 0.7071068}
-  m_LocalPosition: {x: 31.5, y: 20, z: 17.5}
+  m_LocalPosition: {x: 15.78, y: 20, z: 8.7}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children: []
   m_Father: {fileID: 0}
@@ -226,8 +226,8 @@ MonoBehaviour:
   pathfinder: {fileID: 1325241227}
   startX: 0
   startY: 0
-  goalX: 12
-  goalY: 5
+  goalX: 20
+  goalY: 12
   timeStep: 0
 --- !u!4 &414596766
 Transform:
@@ -272,7 +272,7 @@ MonoBehaviour:
   width: 10
   height: 4
   textAsset: {fileID: 0}
-  textureMap: {fileID: 2800000, guid: 20dc806936cdf5e4989bbaa58e503379, type: 3}
+  textureMap: {fileID: 2800000, guid: 83c2df0c6aacb7143bd2038b880096d1, type: 3}
   resourcePath: Mapdata
   openColor:
     serializedVersion: 2
@@ -338,7 +338,7 @@ MonoBehaviour:
   highlightColor: {r: 1, g: 1, b: 0.5019608, a: 1}
   showIterations: 1
   showColors: 1
-  showArrows: 1
+  showArrows: 0
   exitOnGoal: 1
   isComplete: 0
   mode: 3
