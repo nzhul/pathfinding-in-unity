@@ -336,7 +336,7 @@ MonoBehaviour:
   pathColor: {r: 0, g: 1, b: 1, a: 1}
   arrowColor: {r: 0.84705883, g: 0.84705883, b: 0.84705883, a: 1}
   highlightColor: {r: 1, g: 1, b: 0.5019608, a: 1}
-  showIterations: 0
+  showIterations: 1
   showColors: 1
   showArrows: 0
   exitOnGoal: 1
