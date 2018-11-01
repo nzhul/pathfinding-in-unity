@@ -1,0 +1,2 @@
+C:\Users\nzhul\Documents\GitHub\pathfinding-in-unity\pathfinding-in-unity\obj\Debug\Assembly-CSharp.csprojAssemblyReference.cache
+C:\Users\nzhul\Documents\GitHub\pathfinding-in-unity\pathfinding-in-unity\obj\Debug\Assembly-CSharp.csproj.CoreCompileInputs.cache
